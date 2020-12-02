@@ -1,0 +1,41 @@
+10 REM >Loader
+20 REM"Ö BASIC (yuck!) loader for:
+30 REM"
+40 REM"Ç* *É O N S L A U G H TÇ * *
+50 REM"
+60 REM"Ü Probably the best type-in
+70 REM"Ügame ever (to be) published.
+80 REM"
+90 REM"Ñ        - o O o -
+100 REM"
+110 REM"Å(Message to the Daves -
+120 REM"Å it takes about 18 minutes
+130 REM"Å to read the *BANJO message
+140 REM"Å in Repton Infinity,
+150 REM"Å by the way.)
+160 :
+170 ON ERROR IF ERR=17:GOTO 270 ELSE MODE 7:PRINT"Urk! Someone's been fiddling:"':REPORT:PRINT" at line ";ERL:END
+180 MODE 7
+190 VDU 14
+200 X%=OPENIN("!Help")
+210 REPEAT
+220 word$=FNgetaword
+230 IF POS+LENword$>39:VDU10,13
+240 PRINT word$;" ";
+250 UNTIL EOF #X%
+260 PRINT'"Press SPACE to start...":REPEATUNTILGET=32
+270 CLOSE #X%
+280 :
+290 L%=1
+300 IF INKEY-1 MODE 7:PRINT"ÇOnslaught"''"ÉStart level? (1-6)Å";:INPUT;L%:IF L%<1 OR L%>6 L%=1
+310 CHAIN "Start"
+320 END
+330 :
+340 DEF FNgetaword
+350 LOCAL bill$,ben$
+360 REPEAT
+370 bill$=CHR$(BGET#X%)
+380 IF bill$=CHR$13:bill$=CHR$13+CHR$10
+390 IF bill$<>" ":ben$=ben$+bill$
+400 UNTIL bill$=" ":REM My kingdom for a WHILE statement ....
+410 =ben$
