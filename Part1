@@ -1,0 +1,215 @@
+10 REM >Part1
+20 [OPT N%
+30 .bulsprite EQUD&200099FF:EQUD&FF990000
+40 .token1 EQUD &FFFFFF:EQUD &606024
+50 .token2 EQUD &602400FF:EQUD &FFFF0060
+60 .token3 EQUD &60602400:EQUD &FFFFFF00
+70 .time EQUD&12163000:EQUD&21212:EQUD&2525A000:EQUD&52525:EQUD&E1E1A000:EQUD&5A5A5:EQUD&C084E000:EQUD&CE080
+80 .ssprgr EQUWbulsprite:EQUWtoken1:EQUWtoken2:EQUWtoken3:EQUWtoken2
+90 .ssprout EQUWbullet:EQUWtokenl:EQUWtokenl:EQUWtokenl:EQUWtokenl
+100 .cls
+110 LDA#&FF:LDY#&F7:LDXscrn:CPX#&62:BNEP%+5:JMPcls2
+120 .cls1 :]
+130 FORK%=&4548TO&5F3F STEP 320:[OPTN%
+140 STAK%,Y:]NEXT:[OPTN%
+150 DEY:BNE cls1
+160 ]FORK%=&4548TO&5F3F STEP 320:[OPT N%
+170 STAK%:]NEXT
+180 [OPT N%:RTS:.cls2
+190 ]:FORK%=&6348 TO &7D3F STEP 320:[OPT N%
+200 STAK%,Y:]NEXT:[OPT N%
+210 DEY:BNEcls2:]:FORK%=&6348 TO &7D3F STEP 320:[OPT N%
+220 STAK%,Y:]NEXT:[OPT N%
+230 RTS
+240 :
+250 .pokevidc
+260 LDA#0:STAtemp:LDAscrn:LSRA:RORtemp:LSRA:RORtemp:LSRA:RORtemp:LDX#12:STX&FE00:STA&FE01:LDX#13:STX&FE00:LDAtemp:STA&FE01:RTS
+270 :
+280 .clippedsprite
+290 LDA xstart:ASLA:ASLA:ASLA:LDYystart
+300 ADC scrlo%,Y:STAwrite:LDAscrhi%,Y
+310 ADC scrn:STAwrite+1
+320 LDAystart:STAy:.clipped2 LDAxstart:STAx
+330 LDY #0
+340 ]FORK%=0TO7:[OPTN%:LDA(read),Y:STA(write),Y:INY:]:NEXT:[OPT N%
+350 LDXx:INX:CPXxsize:BEQdonerow
+360 CPX#31:BEQdonerow:STXx
+370 ]FORK%=0TO7:[OPTN%:LDA(read),Y:STA(write),Y:INY:]:NEXT:[OPT N%
+380 LDXx:INX:CPXxsize:BEQdonerow
+390 CPX#31:BEQdonerow:STXx
+400 ]FORK%=0TO7:[OPTN%:LDA(read),Y:STA(write),Y:INY:]:NEXT:[OPT N%
+410 .donerow
+420 LDXy:INX:CPXysize:BEQdonesprite
+430 CPX#21:BEQdonesprite:STXy
+440 CLC:LDA read:ADC #24:STAread:BCCP%+4:INCread+1
+450 CLC:LDAwrite:ADC#&40:STAwrite:LDAwrite+1:ADC#1:STAwrite+1:JMPclipped2
+460 .donesprite .notvisible RTS
+470 :
+480 .clipmonster
+490 SEC:LDAmx:SBCtopx:CMP#&FE:BCSbehind
+500 CMP#48:BCCok:ADC#47:.ok
+510 CMP#31:BCSnotvisible
+520 STAxstart
+530 ADC#3:STAxsize
+540 JMPchecky
+550 .behind
+560 ADC#2:STA xsize:TAY:LDAmult8,Y
+570 ADCread:STAread:BCCP%+4:INCread+1
+580 LDA#0:STAxstart
+590 .checky
+600 SEC:LDAmy:SBCtopy:CMP#&FE:BCSabove
+610 CMP#48:BCCP%+4:ADC#47
+620 CMP#21:BCSnotvisible
+630 STA ystart:ADC#3:STAysize
+640 JMPclippedsprite
+650 .above
+660 ADC #2:STAysize:TAY:LDAmult24,Y
+670 CLC:ADCread:STAread:BCCP%+4
+680 INCread+1:LDA#0:STAystart:JMPclippedsprite
+690 :
+700 .mult8 EQUB0:EQUB15:EQUB7
+710 .mult24 EQUB0:EQUB48:EQUB24
+720 .gentab EQUB32:EQUB64:EQUB20:EQUB0:EQUB128
+730 :
+740 .reflectmonster
+750 CLC:LDAwrite:ADC#16:STAwrite
+760 BCCP%+4:INCwrite+1
+770 LDA#3:STAcounty:.reflp3 LDA#3
+780 STAcountx:.reflp2
+790 LDY#7:.reflp LDA(read),Y:TAX
+800 LDAreftab%,X:STA(write),Y:DEY
+810 BPLreflp:CLC:LDAread:ADC#8:STAread
+820 BCCP%+4:INCread+1:SEC:LDAwrite
+830 SBC#8:STAwrite:BCSP%+4:DECwrite+1:DECcountx:BNEreflp2
+840 CLC:LDAwrite:ADC#48:STAwrite
+850 BCCP%+4:INCwrite+1
+860 DECcounty:BNEreflp3:RTS
+870 :
+880 .start
+890 SEI:LDA#&7F:STA&FE4E:LDA#&82:STA&FE4E:LDA#&FF:STA&FE42:LDA#&7F:STA&FE43:LDA#3:STA&FE40
+900 LDA#0:STAvsync:STAfiredelay:LDA#1:STAlevel
+910 LDA&430:BEQnob:CMP#15:BCSnob:STAlevel:.nob \\\\
+920 LDA#irq MOD256:STA&204:LDA#irq DIV256:STA&205:CLI
+930 LDA#6:STA&FE00:LDA#24:STA&FE01
+940 LDA#7:STA&FE00:LDA#31:STA&FE01
+950 LDA#10:STA&FE00:LDA#32:STA&FE01
+960 LDX#&1E:LDY#0:.copyme LDA&6200,Y:STA&4400,Y:INY:BNEcopyme:INCcopyme+2:INCcopyme+5:DEX:BNEcopyme
+970 LDX#31:.timelp LDAtime,X:STA&60C0,X:STA&7EC0,X:DEX:BPLtimelp
+980 LDX#47:.lp LDAsctext,X:STA&4510,X:STA&6310,X:DEX:BPLlp
+990 LDA#&50:STAaddr:STAwrite:LDA#&46:STAaddr+1:LDA#&64:STAwrite+1:LDX#6:.lp LDA#0:STAscore,X:LDY#7:.lp2 LDAdigits,Y:STA(write),Y:STA(addr),Y:DEY:BPLlp2:CLC:LDAwrite:ADC#8:STAwrite:LDAaddr:ADC#8:STAaddr:DEX:BNElp
+1000 LDA#0:STApending:STApending+1
+1010 LDA#&80:STAread
+1020 LDA#&3F:STAread+1
+1030 LDA#0:STAwrite:LDA#4:STAwrite+1
+1040 LDA#7:STAtemp:.flipmonsters
+1050 JSRreflectmonster:SEC:LDAwrite:SBC#16:STAwrite:BCSP%+4:DECwrite+1
+1060 DECtemp:BPLflipmonsters
+1070 LDA#0:STArndptr
+1080 LDA#&62:STAscrn
+1090 .restartlife
+1100 JSRrestartlevel
+1110 .mainloop
+1120 JSRcls
+1130 JSRshowmap
+1140 LDX#15:.monstlp
+1150 LDAmonsttype,X:ASLA:BCSnotamonst:TAY:LDAlogic,Y:STAjsr+1:LDAlogic+1,Y:STAjsr+2
+1160 STXstoreX:LDAmonstx,X:STAmx:LDAmonsty,X:STAmy:LDA#128:JSRputonsolmap
+1170 LDXstoreX
+1180 .jsr JSR&FFFF
+1190 LDAmonstx,X:STAmx:LDAmonsty,X:STAmy
+1200 TXA:JSRputonsolmap
+1210 JSRclipmonster
+1220 LDXstoreX:.notamonst DEX:BPLmonstlp
+1230 CLC:LDAtopx:ADC#14:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:TAX
+1240 LDAtab48lo%,X:STAaddr:LDAtab48hi%,X:STAaddr+1:INX:CPX#48:BCCP%+4:LDX#0
+1250 LDAtab48lo%,X:STAaddr2:LDAtab48hi%,X:STAaddr2+1:INX:CPX#48:BCCP%+4:LDX#0
+1260 LDAtab48lo%,X:STAaddr3:LDAtab48hi%,X:STAaddr3+1
+1270 LDA(addr),Y:BPLyouhit:LDA(addr2),Y:BPLyouhit:LDA(addr3),Y:BPLyouhit
+1280 INY:CPY#48:BCCP%+4:LDY#0
+1290 LDA(addr),Y:BPLyouhit:LDA(addr2),Y:BPLyouhit:LDA(addr3),Y:BPLyouhit
+1300 INY:CPY#48:BCCP%+4:LDY#0
+1310 LDA(addr),Y:BPLyouhit:LDA(addr2),Y:BPLyouhit:LDA(addr3),Y:BPLyouhit
+1320 JMPnothityou:.youhit JSRkillyou:.nothityou
+1330 LDAtopx:CLC:ADC#14:CMP#48:BCCP%+4:SBC#48:STAmx:STAtemp:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:STAmy:STAtemp+1:LDA#64:JSRputonsolmap
+1340 LDX#31:.ssprlp LDAssprnum,X:BMInextsspr:AND#7:ASLA:TAY:LDAssprgr,Y:STAread:LDAssprgr+1,Y:STAread+1:LDAssprout,Y:STAjsr2+1:LDAssprout+1,Y:STAjsr2+2
+1350 .jsr2 JSR&FFFF
+1360 SEC:LDAssprx,X:SBCtopx:CMP#48:BCCP%+4:ADC#47:CMP#31:BCSnextsspr:STAx
+1370 SEC:LDAsspry,X:SBCtopy:CMP#48:BCCP%+4:ADC#47:CMP#21:BCSnextsspr:TAY:LDAx:ASLA:ASLA:ASLA:ADCscrlo%,Y:STAwrite:LDAscrhi%,Y:ADCscrn:STAwrite+1:STXstoreX:JSRspr8:LDXstoreX
+1380 .nextsspr
+1390 DEX:BPL ssprlp
+1400 LDX#127:.showdotlp
+1410 LDAdotmx,X:BPLP%+5:JMPnextdot:SEC:SBCtopx:CMP#48:BCCP%+4:ADC#47:CMP#31:BCSmovedot:ASLA:ASLA:ASLA:STAwrite
+1420 LDAdotmy,X:SEC:SBCtopy:CMP#48:BCCP%+4:ADC#47:CMP#21:BCSmovedot:TAY:LDAscrlo%,Y:CLC:ADCwrite:STAwrite:LDAscrhi%,Y:ADCscrn:STAwrite+1
+1430 LDAdoty,X:LSRA:LSRA:LSRA:LSRA:LSRA:AND#&FE:TAY:STXstoreX
+1440 LDAdotx,X:LSRA:LSRA:LSRA:LSRA:LSRA:LSRA:TAX:LDApixels,X
+1450 EOR(write),Y:STA(write),Y:INY
+1460 LDApixels,X:EOR(write),Y:STA(write),Y
+1470 LDXstoreX:.movedot
+1480 LDAdotvx,X:BMInegative:LDA#0:STAx
+1490 BEQpositive:.negative LDA#&FF:STAx
+1500 .positive LDAdotvx,X:ASLA:CLC:ADCdotx,X
+1510 STAdotx,X:LDAdotmx,X:ADCx:CMP#48:BCCdotok:SBC#48:BPLdotok:ADC#95:.dotok STAdotmx,X
+1520 LDAdotvy,X:BMIneg2:LDA#0:STAy
+1530 BEQpos2:.neg2 LDA#&FF:STAy
+1540 .pos2 LDAdotvy,X:ASLA:CLC:ADCdoty,X
+1550 STAdoty,X:LDAdotmy,X:ADCy:CMP#48:BCCdotok2:SBC#48:BPLdotok2:ADC#95:.dotok2 STAdotmy,X:LDAdotvy,X:CLC:ADC#9:STAdotvy,X:BVCnextdot:LDA#128:STAdotmx,X:.nextdot DEX:BMIP%+5:JMPshowdotlp
+1560 LDX#7:.genloop LDAgennum,X:BEQnextgen:LDAgencount,X:BEQmakeamonst:DECgencount,X:JMPnextgen:.makeamonst
+1570 LDAmonsters:CMP#16:BEQnextgen
+1580 LDY#15:.findmonst LDAmonsttype,Y:BMIgotmonst:DEY:BPLfindmonst:.gotmonst
+1590 INCmonsters:LDAgenx,X:ASLA:STAmonstx,Y:LDAgeny,X:ASLA:SEC:SBC#3:BCSP%+4:ADC#48:STAmonsty,Y:LDAgentype,X:STAmonstbyte,Y:LDA#3:STAmonsttype,Y
+1600 LDA#0:STAmonstanim,Y:LDA#14:STAmonsttime,Y:LDYgentype,X:LDAgentab,Y:STAgencount,X:DECgennum,X:BNEnextgen:LDYgeny,X:LDAtab24lo%,Y:STAaddr:LDAtab24hi%,Y:STAaddr+1:LDYgenx,X:LDA#0:STA(addr),Y
+1610 INY:CPY#24:BCCP%+4:LDY#0:STA(addr),Y
+1620 .nextgen DEX:BPLgenloop
+1630 LDAtimedef:BEQnotfast:DECtimedef:DECtimeleft:BNEnotfast:JSRkillyou:.notfast
+1640 DECtimer:BPLpomme:LDAdeftime:STAtimer:DECtimeleft:BNEpomme:JSRkillyou:.pomme LDAtimeleft:AND#&F8:TAY:LDAtimeleft:LSRA:AND#3:TAX:LDA#8:STAmx:.lp LDAmask,X:AND&60E0,Y:STA&60E0,Y:STA&7EE0,Y:INY:DECmx:BNElp
+1650 LDApending:ORApending+1:BNEP%+5:JMPnotscoring
+1660 SEC:LDApending:SBC#1:STApending:BCSP%+4:DECpending+1:LDA#0:LDYscore+4:INY:STYscore+4:CPY#10:BNEshowscore
+1670 STAscore+4:LDYscore+3:INY:STYscore+3:CPY#10:BNEshowscore:STAscore+3:LDYscore+2:INY:STYscore+2:CPY#10:BNEshowscore:STAscore+2:LDYscore+1:INY:STYscore+1:CPY#10:BNEshowscore:STAscore+1
+1680 LDYscore:INY:STYscore:CPY#10:BNEshowscore:STAscore
+1690 .showscore
+1700 LDY#0:LDX#0:.shlp LDAscore,X:STXstoreX:ASLA:ASLA:ASLA:TAX:]:FORK%=0TO7:[OPT N%:LDAdigits,X:STA&6450,Y:STA&4650,Y:INY:INX:]:NEXT:[OPT N%
+1710 LDXstoreX:INX:CPX#6:BNEshlp
+1720 .notscoring
+1730 LDAtemp:STAmx:LDAtemp+1:STAmy
+1740 LDA#128:JSRputonsolmap
+1750 LDAdieflag:BEQnotdead:DECdieflag:BEQendlife:JMPignoreme:.endlife JSRfancycls:JMPrestartlife:.notdead
+1760 LDA#14:STAxstart:LDA#9:STAystart:LDA#17:STAxsize:LDA#12:STAysize:LDAtopx:AND#1:ASLA:ORAdir:TAY:LDAmelo,Y:STAread:LDAmehi,Y:STAread+1:JSRclippedsprite
+1770 LDA#66:STA&FE4F:BIT&FE4F:BPLnotleft:LDA#0:STAdir
+1780 CLC:LDAtopx:ADC#17:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:STAy
+1790 JSRgetmap:BNEnotleft:LDAy:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:STAy:JSRgetmap:BNEnotleft
+1800 LDYtopx:INY:CPY#48:BCCP%+4:LDY#0:STYtopx:.notleft
+1810 LDA#97:STA&FE4F:BIT&FE4F:BPLnotright:LDA#1:STAdir
+1820 CLC:LDAtopx:ADC#13:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:STAy
+1830 JSRgetmap:BNEnotright
+1840 CLC:LDAy:ADC#2:CMP#48:BCCP%+4:SBC#48:STAy
+1850 JSRgetmap:BNEnotright
+1860 LDYtopx:DEY:BPLP%+4:LDY#47:STYtopx:.notright
+1870 LDAjumpflg:BEQcheckfall:DECjumpflg:CMP#5:BCSP%+5:JMPdontjump
+1880 CLC:LDAtopx:ADC#14:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#8:CMP#48:BCCP%+4:SBC#48:STAy:JSRgetmap:BNEdontjump
+1890 TYA:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:TAY:JSRgetmap:BNEdontjump:LDXtopy:DEX:CPX#&FF:BNEP%+4:LDX#47:STXtopy:JMPdontjump
+1900 .checkfall
+1910 CLC:LDAtopx:ADC#14:CMP#48:BCCP%+4:SBC#48:TAY
+1920 CLC:LDAtopy:ADC#12:CMP#48:BCCP%+4:SBC#48:STAy
+1930 JSRgetmap:BNEdontfall
+1940 TYA:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:TAY
+1950 JSRgetmap:BNEdontfall
+1960 .fall LDYtopy:INY:CPY#48:BCCP%+4:LDY#0:STYtopy:JMPdontjump:.dontfall
+1970 LDA#0:STA&FE4F:BIT&FE4F:BPLnotjump
+1980 LDA#10:STAjumpflg:.notjump
+1990 .dontjump
+2000 LDAfiredelay:BEQcanfire:DECfiredelay:JMPnotfire:.canfire
+2010 LDA#73:STA&FE4F:BIT&FE4F:BPLnotfire
+2020 LDA#3:STAfiredelay
+2030 LDX#0:.findlp LDAssprnum,X:BMIfndit:INX:CPX#16:BNEfindlp:JMPnotfire:.fndit
+2040 LDAdir:STAssprdir,X:LDAtopx:CLC:ADC#15:CMP#48:BCCP%+4:SBC#48:STAssprx,X:LDAtopy:CLC:ADC#10:CMP#48:BCCP%+4:SBC#48:STAsspry,X:LDA#0:STAssprnum,X:.notfire
+2050 .ignoreme
+2060 .fx19 LDAvsync:CMP#2:BCCfx19:.fx192 CMPvsync:BEQfx192
+2070 LDA#0:STAvsync
+2080 JSRpokevidc:LDAscrn:EOR#(&44 EOR&62):STAscrn
+2090 LDAtotmonsters:BEQP%+5:JMPmainloop
+2100 JSRfancycls
+2110 INClevel:JMPrestartlife
+2120 :
+2130 .mehi EQUB &3E:EQUB&3F:EQUB&3E:EQUB&3E:.melo EQUB&A8:EQUB&38:EQUB&60:EQUB&F0
+2140 .mask EQUD &EECC8800
+2150 ]:ENDPROC

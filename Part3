@@ -1,0 +1,114 @@
+10 REM >Part3
+20 [OPTN%
+30 .restartlevel
+40 LDXlevel:LDA#maps%MOD256:STAaddr:LDA#maps%DIV256:STAaddr+1:CPX#1:BEQlevelfound:DEX
+50 .fndlevlp LDY#0:LDA(addr),Y:CLC:ADCaddr:STAaddr:BCCP%+4:INCaddr+1:DEX:BNEfndlevlp
+60 .levelfound
+70 LDX#0:TXA:.clrmaplp STA&900,X:STA&A00,X:DEX:BNEclrmaplp:LDX#&3F:.clrmaplp STA&B00,X:DEX:BPLclrmaplp
+80 SEC:LDA#50:SBClevel:LSRA:LSRA:LSRA:STAdeftime:LDA#0:STAtotmonsters
+90 STAtimer:STAdieflag:STAtopx:STAtopy:STAjumpflg:STAdir:STAmonsters
+100 LDX#15:LDA#128:.monclrlp STAmonsttype,X:DEX:BPLmonclrlp
+110 LDX#127:.dotclrlp STAdotmx,X:DEX:BPLdotclrlp
+120 LDX#31:.smclrlp STAssprnum,X:DEX:BPLsmclrlp
+130 LDX#7:LDA#0:.genclrlp STAgennum,X:DEX:BPLgenclrlp
+140 LDX#9:LDA#solmap%DIV256:STAsolclrlp+2:LDY#0:LDA#128:.solclrlp STAsolmap%,Y:INY:BNEsolclrlp
+150 INCsolclrlp+2:DEX:BNEsolclrlp
+160 LDA#231:STAtimeleft
+170 LDX#0:LDY#0:.timebarlp
+180 LDAtimebarspr,X:STA&60E0,Y
+190 STA&7EE0,Y:INX:CPX#8:BCCP%+4
+200 LDX#0:INY:CPY#232:BNEtimebarlp
+210 :
+220 LDY#1:LDA(addr),Y:STAtemp
+230 AND#7:TAX:INY
+240 .placegens
+250 JSRgetxy
+260 LDAx:STAgenx,X:LDAy:STAgeny,X
+270 LDA(addr),Y:LSRA:LSRA:PHA
+280 AND#7:STAgentype,X
+290 LDA#1:STAgencount,X
+300 PLA:LSRA:LSRA:LSRA:STAgennum,X
+310 CLC:ADCtotmonsters:STAtotmonsters
+320 STYstoreY:LDYy:LDAtab24lo%,Y
+330 STAwrite:LDAtab24hi%,Y:STAwrite+1
+340 LDYx:LDA#14:STA(write),Y
+350 INY:CPY#24:BCCP%+4:LDY#0
+360 LDA#15:STA(write),Y
+370 LDYstoreY:INY:DEX
+380 BPLplacegens
+390 :
+400 LDAtemp:LSRA:LSRA:LSRA:STAcountx
+410 .placeplats
+420 JSRgetxy
+430 LDA(addr),Y:LSRA:LSRA:STAtemp
+440 AND#3:ASLA:TAX:LDAplatrouts,X
+450 STAplatjsr+1:LDAplatrouts+1,X
+460 STAplatjsr+2:.platjsr JSR&FFFF
+470 DECcountx:BPLplaceplats
+480 RTS
+490 :
+500 .getxy
+510 LDA(addr),Y:AND#31:STAx
+520 LDA(addr),Y:LSRA:LSRA:LSRA:LSRA
+530 LSRA:STAy
+540 INY:LDA(addr),Y:AND#3
+550 ASLA:ASLA:ASLA:ORAy:STAy
+560 RTS
+570 :
+580 .platrouts EQUWvertical
+590 EQUWhoriz:EQUWends
+600 :
+610 .vertical
+620 LDAtemp:LSRA:LSRA:STAtemp
+630 INY:LDA(addr),Y:INY:STYstoreY
+640 STAtemp+1:LDXy:.vertloop
+650 LDYx:LDAtab24lo%,X:STAwrite
+660 LDAtab24hi%,X:STAwrite+1
+670 LDAtemp:STA(write),Y
+680 INX:CPX#24:BCCP%+4:LDX#0
+690 DECtemp+1:BNEvertloop
+700 LDYstoreY:RTS
+710 :
+720 .horiz
+730 LDAtemp:LSRA:LSRA:STAtemp
+740 INY:LDA(addr),Y:INY
+750 STYstoreY:TAX
+760 LDYy:LDAtab24lo%,Y:STAwrite
+770 LDAtab24hi%,Y:STAwrite+1
+780 LDYx:.pokeonloop
+790 LDAtemp:STA(write),Y
+800 INY:CPY#24:BCCP%+4:LDY#0
+810 DEX:BNEpokeonloop
+820 LDYstoreY
+830 RTS
+840 :
+850 .ends
+860 LDAtemp:LSRA:LSRA:STAtemp
+870 INY:LDA(addr),Y:INY:STYstoreY
+880 TAX:LDYy:LDAtab24lo%,Y:STAwrite
+890 LDAtab24hi%,Y:STAwrite+1
+900 LDYx:LDAtemp:CLC:ADC#1
+910 STA(write),Y:INY:CPY#24:BCCP%+4
+920 LDY#0:DEX:.pokeonloop
+930 LDAtemp:STA(write),Y
+940 INY:CPY#24:BCCP%+4:LDY#0
+950 DEX:CPX#1:BNEpokeonloop
+960 LDAtemp:CLC:ADC#2:STA(write),Y
+970 LDYstoreY:RTS
+980 :
+990 .timebarspr EQUD&F0F00F00:EQUD&0FF0F0
+1000 :
+1010 .fancycls
+1020 JSRpokevidc
+1030 LDA#8:STAcountx:.fancyloop
+1040 LDA#&48:STAaddr:CLC:LDAscrn:ADC#1:STAaddr+1:LDX#21:.fancyloop2
+1050 LDY#0:.fancyloop3 LDA(addr),Y
+1060 LSRA:STA(addr),Y:INY:CPY#248
+1070 BNEfancyloop3:CLC:LDAaddr
+1080 ADC#&40:STAaddr:LDAaddr+1:ADC#1
+1090 STAaddr+1:DEX:BNEfancyloop2
+1100 LDA#0:STAvsync:.wait LDAvsync:BEQwait
+1110 DECcountx:BNEfancyloop
+1120 LDAscrn:EOR#(&44 EOR &62):STAscrn
+1130 RTS
+1140 ]:ENDPROC

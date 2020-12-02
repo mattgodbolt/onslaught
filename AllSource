@@ -1,0 +1,643 @@
+REM >Core
+IFPAGE<>&3000:PAGE=&3000:CHAIN"Core"
+:
+MODE7
+LOMEM=&6500:top%=TOP-2
+*KEY1 OSCLI"Save Game 1100 "+STR$~P%+" "+STR$~start|MCH."Loader"
+read=&70:write=&72:addr=&74
+x=&76:y=&77:temp=&78:scrn=&7A
+xstart=&7B:ystart=&7C:xsize=&7D:ysize=&7E
+topx=&7F:topy=&80:mx=&81:my=&82
+countx=&83:county=&84
+storeY=&85:storeX=&86
+monsters=&87:dir=&88:jumpflg=&89
+vsync=&8A:offset=&8B:addr2=&8C
+addr3=&8E
+firedelay=&90:rndptr=&91
+timeleft=&92:timer=&93:deftime=&94
+score=&95:pending=&9B:timedef=&9D
+dieflag=&9E:level=&9F
+totmonsters=&A0
+monstanim=&10
+monsttime=&20
+monstbyte=&40:monsttype=&30
+monstx=&50:monsty=&60
+scrlo%=&1100:scrhi%=&1118
+tab24lo%=&1130:tab24hi%=&1148
+sclo%=&1160:schi%=&1170
+solmap%=&3380
+maps%=&2B80
+reftab%=&1180:FORN%=0TO&FF
+b1%=(N%AND&88)DIV8
+b2%=(N%AND&44)DIV2
+b3%=(N%AND&22)*2
+b4%=(N%AND&11)*8
+N%?reftab%=b1%ORb2%ORb3%ORb4%
+NEXT
+FORN%=0TO20:A%=&148+&140*N%:N%?scrlo%=A%:N%?scrhi%=A%DIV256:NEXT
+FORN%=0TO23:A%=&900+24*N%:tab24lo%?N%=A%:tab24hi%?N%=A%DIV256:NEXT
+FORN%=0TO15:A%=&3C80+(N%-1)*32:sclo%?N%=A%:schi%?N%=A%DIV256:NEXT
+monlo=&1280:monhi=&12A0:FORN%=0TO15:A%=&3F80+72*N%:B%=&400+72*N%
+monlo?(N%*2)=A%:monlo?(N%*2+1)=B%
+monhi?(N%*2)=A%DIV256:monhi?(N%*2+1)=B%DIV256:NEXT
+ssprx=&12C0:sspry=&12E0:ssprdir=&1300:ssprnum=&1320
+tab48lo%=&1340:tab48hi%=&1370
+FORN%=0TO47:A%=solmap%+48*N%:tab48lo%?N%=A%:tab48hi%?N%=A%DIV256:NEXT
+dotmx=&E00:dotmy=&E80:dotx=&F00:doty=&F80:dotvx=&1000:dotvy=&1080
+genx=&13A0:geny=&13A8:gentype=&13B0:gencount=&13B8:gennum=&13C0
+sctext=&B40:digits=&B70
+FORN%=0TO2STEP2:P%=&13C8:FORpart%=1TO3
+PRINTN%,part%
+OSCLI"L.Part"+STR$part%+" "+STR$~top%
+PROCassemble
+NEXT,
+OSCLI"Save Game 1100 "+STR$~P%+" "+STR$~start
+END
+:
+DEF PROCassemble
+REM >Part1
+[OPT N%
+.bulsprite EQUD&200099FF:EQUD&FF990000
+.token1 EQUD &FFFFFF:EQUD &606024
+.token2 EQUD &602400FF:EQUD &FFFF0060
+.token3 EQUD &60602400:EQUD &FFFFFF00
+.time EQUD&12163000:EQUD&21212:EQUD&2525A000:EQUD&52525:EQUD&E1E1A000:EQUD&5A5A5:EQUD&C084E000:EQUD&CE080
+.ssprgr EQUWbulsprite:EQUWtoken1:EQUWtoken2:EQUWtoken3:EQUWtoken2
+.ssprout EQUWbullet:EQUWtokenl:EQUWtokenl:EQUWtokenl:EQUWtokenl
+.cls
+LDA#&FF:LDY#&F7:LDXscrn:CPX#&62:BNEP%+5:JMPcls2
+.cls1 :]
+FORK%=&4548TO&5F3F STEP 320:[OPTN%
+STAK%,Y:]NEXT:[OPTN%
+DEY:BNE cls1
+]FORK%=&4548TO&5F3F STEP 320:[OPT N%
+STAK%:]NEXT
+[OPT N%:RTS:.cls2
+]:FORK%=&6348 TO &7D3F STEP 320:[OPT N%
+STAK%,Y:]NEXT:[OPT N%
+DEY:BNEcls2:]:FORK%=&6348 TO &7D3F STEP 320:[OPT N%
+STAK%,Y:]NEXT:[OPT N%
+RTS
+:
+.pokevidc
+LDA#0:STAtemp:LDAscrn:LSRA:RORtemp:LSRA:RORtemp:LSRA:RORtemp:LDX#12:STX&FE00:STA&FE01:LDX#13:STX&FE00:LDAtemp:STA&FE01:RTS
+:
+.clippedsprite
+LDA xstart:ASLA:ASLA:ASLA:LDYystart
+ADC scrlo%,Y:STAwrite:LDAscrhi%,Y
+ADC scrn:STAwrite+1
+LDAystart:STAy:.clipped2 LDAxstart:STAx
+LDY #0
+]FORK%=0TO7:[OPTN%:LDA(read),Y:STA(write),Y:INY:]:NEXT:[OPT N%
+LDXx:INX:CPXxsize:BEQdonerow
+CPX#31:BEQdonerow:STXx
+]FORK%=0TO7:[OPTN%:LDA(read),Y:STA(write),Y:INY:]:NEXT:[OPT N%
+LDXx:INX:CPXxsize:BEQdonerow
+CPX#31:BEQdonerow:STXx
+]FORK%=0TO7:[OPTN%:LDA(read),Y:STA(write),Y:INY:]:NEXT:[OPT N%
+.donerow
+LDXy:INX:CPXysize:BEQdonesprite
+CPX#21:BEQdonesprite:STXy
+CLC:LDA read:ADC #24:STAread:BCCP%+4:INCread+1
+CLC:LDAwrite:ADC#&40:STAwrite:LDAwrite+1:ADC#1:STAwrite+1:JMPclipped2
+.donesprite .notvisible RTS
+:
+.clipmonster
+SEC:LDAmx:SBCtopx:CMP#&FE:BCSbehind
+CMP#48:BCCok:ADC#47:.ok
+CMP#31:BCSnotvisible
+STAxstart
+ADC#3:STAxsize
+JMPchecky
+.behind
+ADC#2:STA xsize:TAY:LDAmult8,Y
+ADCread:STAread:BCCP%+4:INCread+1
+LDA#0:STAxstart
+.checky
+SEC:LDAmy:SBCtopy:CMP#&FE:BCSabove
+CMP#48:BCCP%+4:ADC#47
+CMP#21:BCSnotvisible
+STA ystart:ADC#3:STAysize
+JMPclippedsprite
+.above
+ADC #2:STAysize:TAY:LDAmult24,Y
+CLC:ADCread:STAread:BCCP%+4
+INCread+1:LDA#0:STAystart:JMPclippedsprite
+:
+.mult8 EQUB0:EQUB15:EQUB7
+.mult24 EQUB0:EQUB48:EQUB24
+.gentab EQUB32:EQUB64:EQUB20:EQUB0:EQUB128
+:
+.reflectmonster
+CLC:LDAwrite:ADC#16:STAwrite
+BCCP%+4:INCwrite+1
+LDA#3:STAcounty:.reflp3 LDA#3
+STAcountx:.reflp2
+LDY#7:.reflp LDA(read),Y:TAX
+LDAreftab%,X:STA(write),Y:DEY
+BPLreflp:CLC:LDAread:ADC#8:STAread
+BCCP%+4:INCread+1:SEC:LDAwrite
+SBC#8:STAwrite:BCSP%+4:DECwrite+1:DECcountx:BNEreflp2
+CLC:LDAwrite:ADC#48:STAwrite
+BCCP%+4:INCwrite+1
+DECcounty:BNEreflp3:RTS
+:
+.start
+SEI:LDA#&7F:STA&FE4E:LDA#&82:STA&FE4E:LDA#&FF:STA&FE42:LDA#&7F:STA&FE43:LDA#3:STA&FE40
+LDA#0:STAvsync:STAfiredelay:LDA#1:STAlevel
+LDA&430:BEQnob:CMP#15:BCSnob:STAlevel:.nob \\\\
+LDA#irq MOD256:STA&204:LDA#irq DIV256:STA&205:CLI
+LDA#6:STA&FE00:LDA#24:STA&FE01
+LDA#7:STA&FE00:LDA#31:STA&FE01
+LDA#10:STA&FE00:LDA#32:STA&FE01
+LDX#&1E:LDY#0:.copyme LDA&6200,Y:STA&4400,Y:INY:BNEcopyme:INCcopyme+2:INCcopyme+5:DEX:BNEcopyme
+LDX#31:.timelp LDAtime,X:STA&60C0,X:STA&7EC0,X:DEX:BPLtimelp
+LDX#47:.lp LDAsctext,X:STA&4510,X:STA&6310,X:DEX:BPLlp
+LDA#&50:STAaddr:STAwrite:LDA#&46:STAaddr+1:LDA#&64:STAwrite+1:LDX#6:.lp LDA#0:STAscore,X:LDY#7:.lp2 LDAdigits,Y:STA(write),Y:STA(addr),Y:DEY:BPLlp2:CLC:LDAwrite:ADC#8:STAwrite:LDAaddr:ADC#8:STAaddr:DEX:BNElp
+LDA#0:STApending:STApending+1
+LDA#&80:STAread
+LDA#&3F:STAread+1
+LDA#0:STAwrite:LDA#4:STAwrite+1
+LDA#7:STAtemp:.flipmonsters
+JSRreflectmonster:SEC:LDAwrite:SBC#16:STAwrite:BCSP%+4:DECwrite+1
+DECtemp:BPLflipmonsters
+LDA#0:STArndptr
+LDA#&62:STAscrn
+.restartlife
+JSRrestartlevel
+.mainloop
+JSRcls
+JSRshowmap
+LDX#15:.monstlp
+LDAmonsttype,X:ASLA:BCSnotamonst:TAY:LDAlogic,Y:STAjsr+1:LDAlogic+1,Y:STAjsr+2
+STXstoreX:LDAmonstx,X:STAmx:LDAmonsty,X:STAmy:LDA#128:JSRputonsolmap
+LDXstoreX
+.jsr JSR&FFFF
+LDAmonstx,X:STAmx:LDAmonsty,X:STAmy
+TXA:JSRputonsolmap
+JSRclipmonster
+LDXstoreX:.notamonst DEX:BPLmonstlp
+CLC:LDAtopx:ADC#14:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:TAX
+LDAtab48lo%,X:STAaddr:LDAtab48hi%,X:STAaddr+1:INX:CPX#48:BCCP%+4:LDX#0
+LDAtab48lo%,X:STAaddr2:LDAtab48hi%,X:STAaddr2+1:INX:CPX#48:BCCP%+4:LDX#0
+LDAtab48lo%,X:STAaddr3:LDAtab48hi%,X:STAaddr3+1
+LDA(addr),Y:BPLyouhit:LDA(addr2),Y:BPLyouhit:LDA(addr3),Y:BPLyouhit
+INY:CPY#48:BCCP%+4:LDY#0
+LDA(addr),Y:BPLyouhit:LDA(addr2),Y:BPLyouhit:LDA(addr3),Y:BPLyouhit
+INY:CPY#48:BCCP%+4:LDY#0
+LDA(addr),Y:BPLyouhit:LDA(addr2),Y:BPLyouhit:LDA(addr3),Y:BPLyouhit
+JMPnothityou:.youhit JSRkillyou:.nothityou
+LDAtopx:CLC:ADC#14:CMP#48:BCCP%+4:SBC#48:STAmx:STAtemp:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:STAmy:STAtemp+1:LDA#64:JSRputonsolmap
+LDX#31:.ssprlp LDAssprnum,X:BMInextsspr:AND#7:ASLA:TAY:LDAssprgr,Y:STAread:LDAssprgr+1,Y:STAread+1:LDAssprout,Y:STAjsr2+1:LDAssprout+1,Y:STAjsr2+2
+.jsr2 JSR&FFFF
+SEC:LDAssprx,X:SBCtopx:CMP#48:BCCP%+4:ADC#47:CMP#31:BCSnextsspr:STAx
+SEC:LDAsspry,X:SBCtopy:CMP#48:BCCP%+4:ADC#47:CMP#21:BCSnextsspr:TAY:LDAx:ASLA:ASLA:ASLA:ADCscrlo%,Y:STAwrite:LDAscrhi%,Y:ADCscrn:STAwrite+1:STXstoreX:JSRspr8:LDXstoreX
+.nextsspr
+DEX:BPL ssprlp
+LDX#127:.showdotlp
+LDAdotmx,X:BPLP%+5:JMPnextdot:SEC:SBCtopx:CMP#48:BCCP%+4:ADC#47:CMP#31:BCSmovedot:ASLA:ASLA:ASLA:STAwrite
+LDAdotmy,X:SEC:SBCtopy:CMP#48:BCCP%+4:ADC#47:CMP#21:BCSmovedot:TAY:LDAscrlo%,Y:CLC:ADCwrite:STAwrite:LDAscrhi%,Y:ADCscrn:STAwrite+1
+LDAdoty,X:LSRA:LSRA:LSRA:LSRA:LSRA:AND#&FE:TAY:STXstoreX
+LDAdotx,X:LSRA:LSRA:LSRA:LSRA:LSRA:LSRA:TAX:LDApixels,X
+EOR(write),Y:STA(write),Y:INY
+LDApixels,X:EOR(write),Y:STA(write),Y
+LDXstoreX:.movedot
+LDAdotvx,X:BMInegative:LDA#0:STAx
+BEQpositive:.negative LDA#&FF:STAx
+.positive LDAdotvx,X:ASLA:CLC:ADCdotx,X
+STAdotx,X:LDAdotmx,X:ADCx:CMP#48:BCCdotok:SBC#48:BPLdotok:ADC#95:.dotok STAdotmx,X
+LDAdotvy,X:BMIneg2:LDA#0:STAy
+BEQpos2:.neg2 LDA#&FF:STAy
+.pos2 LDAdotvy,X:ASLA:CLC:ADCdoty,X
+STAdoty,X:LDAdotmy,X:ADCy:CMP#48:BCCdotok2:SBC#48:BPLdotok2:ADC#95:.dotok2 STAdotmy,X:LDAdotvy,X:CLC:ADC#9:STAdotvy,X:BVCnextdot:LDA#128:STAdotmx,X:.nextdot DEX:BMIP%+5:JMPshowdotlp
+LDX#7:.genloop LDAgennum,X:BEQnextgen:LDAgencount,X:BEQmakeamonst:DECgencount,X:JMPnextgen:.makeamonst
+LDAmonsters:CMP#16:BEQnextgen
+LDY#15:.findmonst LDAmonsttype,Y:BMIgotmonst:DEY:BPLfindmonst:.gotmonst
+INCmonsters:LDAgenx,X:ASLA:STAmonstx,Y:LDAgeny,X:ASLA:SEC:SBC#3:BCSP%+4:ADC#48:STAmonsty,Y:LDAgentype,X:STAmonstbyte,Y:LDA#3:STAmonsttype,Y
+LDA#0:STAmonstanim,Y:LDA#14:STAmonsttime,Y:LDYgentype,X:LDAgentab,Y:STAgencount,X:DECgennum,X:BNEnextgen:LDYgeny,X:LDAtab24lo%,Y:STAaddr:LDAtab24hi%,Y:STAaddr+1:LDYgenx,X:LDA#0:STA(addr),Y
+INY:CPY#24:BCCP%+4:LDY#0:STA(addr),Y
+.nextgen DEX:BPLgenloop
+LDAtimedef:BEQnotfast:DECtimedef:DECtimeleft:BNEnotfast:JSRkillyou:.notfast
+DECtimer:BPLpomme:LDAdeftime:STAtimer:DECtimeleft:BNEpomme:JSRkillyou:.pomme LDAtimeleft:AND#&F8:TAY:LDAtimeleft:LSRA:AND#3:TAX:LDA#8:STAmx:.lp LDAmask,X:AND&60E0,Y:STA&60E0,Y:STA&7EE0,Y:INY:DECmx:BNElp
+LDApending:ORApending+1:BNEP%+5:JMPnotscoring
+SEC:LDApending:SBC#1:STApending:BCSP%+4:DECpending+1:LDA#0:LDYscore+4:INY:STYscore+4:CPY#10:BNEshowscore
+STAscore+4:LDYscore+3:INY:STYscore+3:CPY#10:BNEshowscore:STAscore+3:LDYscore+2:INY:STYscore+2:CPY#10:BNEshowscore:STAscore+2:LDYscore+1:INY:STYscore+1:CPY#10:BNEshowscore:STAscore+1
+LDYscore:INY:STYscore:CPY#10:BNEshowscore:STAscore
+.showscore
+LDY#0:LDX#0:.shlp LDAscore,X:STXstoreX:ASLA:ASLA:ASLA:TAX:]:FORK%=0TO7:[OPT N%:LDAdigits,X:STA&6450,Y:STA&4650,Y:INY:INX:]:NEXT:[OPT N%
+LDXstoreX:INX:CPX#6:BNEshlp
+.notscoring
+LDAtemp:STAmx:LDAtemp+1:STAmy
+LDA#128:JSRputonsolmap
+LDAdieflag:BEQnotdead:DECdieflag:BEQendlife:JMPignoreme:.endlife JSRfancycls:JMPrestartlife:.notdead
+LDA#14:STAxstart:LDA#9:STAystart:LDA#17:STAxsize:LDA#12:STAysize:LDAtopx:AND#1:ASLA:ORAdir:TAY:LDAmelo,Y:STAread:LDAmehi,Y:STAread+1:JSRclippedsprite
+LDA#66:STA&FE4F:BIT&FE4F:BPLnotleft:LDA#0:STAdir
+CLC:LDAtopx:ADC#17:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:STAy
+JSRgetmap:BNEnotleft:LDAy:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:STAy:JSRgetmap:BNEnotleft
+LDYtopx:INY:CPY#48:BCCP%+4:LDY#0:STYtopx:.notleft
+LDA#97:STA&FE4F:BIT&FE4F:BPLnotright:LDA#1:STAdir
+CLC:LDAtopx:ADC#13:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#9:CMP#48:BCCP%+4:SBC#48:STAy
+JSRgetmap:BNEnotright
+CLC:LDAy:ADC#2:CMP#48:BCCP%+4:SBC#48:STAy
+JSRgetmap:BNEnotright
+LDYtopx:DEY:BPLP%+4:LDY#47:STYtopx:.notright
+LDAjumpflg:BEQcheckfall:DECjumpflg:CMP#5:BCSP%+5:JMPdontjump
+CLC:LDAtopx:ADC#14:CMP#48:BCCP%+4:SBC#48:TAY:CLC:LDAtopy:ADC#8:CMP#48:BCCP%+4:SBC#48:STAy:JSRgetmap:BNEdontjump
+TYA:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:TAY:JSRgetmap:BNEdontjump:LDXtopy:DEX:CPX#&FF:BNEP%+4:LDX#47:STXtopy:JMPdontjump
+.checkfall
+CLC:LDAtopx:ADC#14:CMP#48:BCCP%+4:SBC#48:TAY
+CLC:LDAtopy:ADC#12:CMP#48:BCCP%+4:SBC#48:STAy
+JSRgetmap:BNEdontfall
+TYA:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:TAY
+JSRgetmap:BNEdontfall
+.fall LDYtopy:INY:CPY#48:BCCP%+4:LDY#0:STYtopy:JMPdontjump:.dontfall
+LDA#0:STA&FE4F:BIT&FE4F:BPLnotjump
+LDA#10:STAjumpflg:.notjump
+.dontjump
+LDAfiredelay:BEQcanfire:DECfiredelay:JMPnotfire:.canfire
+LDA#73:STA&FE4F:BIT&FE4F:BPLnotfire
+LDA#3:STAfiredelay
+LDX#0:.findlp LDAssprnum,X:BMIfndit:INX:CPX#16:BNEfindlp:JMPnotfire:.fndit
+LDAdir:STAssprdir,X:LDAtopx:CLC:ADC#15:CMP#48:BCCP%+4:SBC#48:STAssprx,X:LDAtopy:CLC:ADC#10:CMP#48:BCCP%+4:SBC#48:STAsspry,X:LDA#0:STAssprnum,X:.notfire
+.ignoreme
+.fx19 LDAvsync:CMP#2:BCCfx19:.fx192 CMPvsync:BEQfx192
+LDA#0:STAvsync
+JSRpokevidc:LDAscrn:EOR#(&44 EOR&62):STAscrn
+LDAtotmonsters:BEQP%+5:JMPmainloop
+JSRfancycls
+INClevel:JMPrestartlife
+:
+.mehi EQUB &3E:EQUB&3F:EQUB&3E:EQUB&3E:.melo EQUB&A8:EQUB&38:EQUB&60:EQUB&F0
+.mask EQUD &EECC8800
+]:ENDPROC
+REM >Part2
+[OPT N%
+.getmap TYA:STAstoreY:LSRA:TAY
+LDAy:LSRA:TAX:LDAtab24lo%,X:STAaddr:LDAtab24hi%,X:STAaddr+1:LDA(addr),Y
+LDYstoreY:CMP#0:RTS
+:
+.showmap
+LDAtopy:LSRA:TAX
+LDAtab24lo%,X:STAaddr:STAaddr2
+LDAtab24hi%,X:STAaddr+1:STAaddr2+1
+LDA#&48:STAwrite
+LDYscrn:INY:STYwrite+1
+LDAtopx:LSRA:TAY
+:
+LDAtopx:AND#1:BEQnochangex
+LDA#&50:STAwrite
+INY:CPY#24:BCCP%+4:LDY#0
+.nochangex
+:
+LDAtopy:AND#1:BEQnochangey
+CLC:LDAwrite:ADC#&40:STAwrite
+LDAwrite+1:ADC#1:STAwrite+1
+INX:CPX#24:BCCnot24
+LDX#0:LDAaddr:SBC#&28:STAaddr
+LDAaddr+1:SBC#2:STAaddr+1
+BNEis24
+.not24
+LDAaddr:ADC#24:STAaddr
+BCCP%+4:INCaddr+1
+.is24
+.nochangey
+:
+STYtemp
+LDA#10:STAcounty:.maploop1
+STXtemp+1
+LDA#15:STAcountx:.maploop2
+LDA(addr),Y:BEQskip
+AND#15
+TAX:LDAsclo%,X:STAread
+LDAschi%,X:STAread+1
+JSRshowscene
+SEC:LDAwrite:SBC#&70:STAwrite
+LDAwrite+1:SBC#2:STAwrite+1
+JMPnotskip:.skip
+CLC:LDAwrite:ADC#16:STAwrite
+BCCnotskip:INCwrite+1:.notskip
+INY:CPY#24:BCCP%+4:LDY#0
+DECcountx:BNEmaploop2
+LDYtemp:CLC:LDAwrite:ADC#&90
+STAwrite:LDAwrite+1:ADC#1
+STAwrite+1
+LDXtemp+1:INX:CPX#24:BCCnot24a
+LDX#0:LDAaddr:SBC#&28:STAaddr
+LDAaddr+1:SBC#2:STAaddr+1
+DECcounty:BNEmaploop1:JMPotherbit:.not24a LDAaddr
+ADC#24:STAaddr:BCCP%+4:INCaddr+1
+DECcounty:BNEmaploop1:.otherbit
+LDAtopx:LSRA:TAY:LDAtopy:AND#1:BEQbottomstrip
+LDAaddr2:STAaddr:LDAaddr2+1:STAaddr+1
+LDA#16:STAoffset:LDA#&48:STAwrite:LDXscrn:INX:STXwrite+1:JSRhstrip:JMPdovert
+.bottomstrip CLC:LDAtopy:ADC#20:CMP#48:BCCP%+4:SBC#48:LSRA:TAX:LDAtab24lo%,X:STAaddr:LDAtab24hi%,X:STAaddr+1
+LDA#0:STAoffset
+LDA#&48:STAwrite:CLC:LDAscrn:ADC#&1A:STAwrite+1:JSRhstrip
+.dovert
+LDAaddr2:STAaddr:LDAaddr2+1:STAaddr+1
+LDAtopx:AND#1:BEQrightstrip:LDAtopx:LSRA:TAY
+LDA#8:STAoffset:LDA#&48:STAwrite:LDXscrn:INX:STXwrite+1:JMPvstrip
+.rightstrip LDAtopx:CLC:ADC#31:CMP#48:BCCP%+4:SBC#48:LSRA:TAY:LDA#0:STAoffset:CLC:LDA#&38:STAwrite:LDXscrn:INX:INX:STXwrite+1:JMPvstrip
+:
+.hstrip
+LDAtopx:AND#1:BEQhstrip2
+.hstrip1 LDA(addr),Y:BEQskipit
+AND #15
+TAX:CLC:LDAsclo%,X:ADCoffset:STAread
+LDAschi%,X:ADC#0:STAread+1
+LDAread:ADC#8:STAread:BCCP%+4:INCread+1:STYstoreY:JSRspr8:LDYstoreY:.skipit
+INY:CPY#24:BCCP%+4:LDY#0
+CLC:LDAwrite:ADC#8:STAwrite
+.hstrip2
+LDA#15:STAcountx:.hs1lp
+LDA(addr),Y:BEQskipit2:AND#15:TAX:CLC:LDAsclo%,X:ADCoffset:STAread:LDAschi%,X:ADC#0:STAread+1
+STYstoreY:JSRspr16:LDYstoreY:.skipit2 CLC:LDAwrite
+ADC#16:STAwrite:BCCP%+4:INCwrite+1
+INY:CPY#24:BCCP%+4:LDY#0
+DECcountx:BNEhs1lp
+LDAtopx:AND#1:BEQP%+3:RTS
+LDA(addr),Y:BEQskipit3:AND#15:TAX:CLC:LDAsclo%,X:ADCoffset:STAread:LDAschi%,X:ADC#0:STAread+1:JSRspr8:.skipit3 RTS
+:
+.vstrip
+LDAtopy:LSRA:STAtemp
+STYstoreY:LDAtopy:AND#1:BEQvstrip2
+.vstrip1 LDA(addr),Y:BEQdontpr
+AND#15
+TAX:CLC:LDAsclo%,X:ADCoffset:STAread
+LDAschi%,X:ADC#0:STAread+1
+LDAread:ADC#16:STAread:BCCP%+4:INCread+1:JSRspr8:.dontpr
+LDXtemp:INX:CLC:LDAaddr:ADC#24:STAaddr:BCCP%+4:INCaddr+1:CPX#24:BCCnoovf:LDX#0
+SEC:LDAaddr:SBC#&40:STAaddr:LDAaddr+1:SBC#2:STAaddr+1:.noovf STXtemp
+CLC:LDAwrite:ADC#&40:STAwrite:LDAwrite+1:ADC#1:STAwrite+1
+.vstrip2 LDA#10:STAcounty:.vs1lp
+LDYstoreY:LDA(addr),Y:BEQdontpr2:AND#15:TAX:CLC:LDAsclo%,X:ADCoffset:STAread:LDAschi%,X:ADC#0:STAread+1
+JSRspr8:CLC:LDAwrite:ADC#&40:STAwrite:LDAwrite+1:ADC#1:STAwrite+1
+LDAread:CLC:ADC#16:STAread
+JSRspr8:CLC:LDAwrite:ADC#&40:STAwrite:LDAwrite+1:ADC#1:STAwrite+1
+BNEnotadd:.dontpr2 CLC:LDAwrite:ADC#&80:STAwrite:LDAwrite+1:ADC#2
+STAwrite+1:.notadd
+LDXtemp:INX:CLC:LDAaddr:ADC#24:STAaddr:BCCP%+4:INCaddr+1:CPX#24:BCCnoovf2:LDX#0:SEC:LDAaddr:SBC#&40:STAaddr:LDAaddr+1:SBC#2:STAaddr+1:.noovf2 STXtemp
+DECcounty:BNEvs1lp
+LDAtopy:AND#1:BEQP%+3:RTS
+LDYstoreY:LDA(addr),Y:BEQdontpr3:AND#15:TAX:LDAsclo%,X:ADCoffset:STAread:LDAschi%,X:ADC#0:STAread+1:JSRspr8:.dontpr3 RTS
+:
+.showscene
+STYstoreY:LDX#2:.scene2
+LDY#0:]FORK%=0TO15:[OPTN%
+LDA(read),Y:STA(write),Y:INY
+]NEXT:[OPTN%
+CLC:LDAread:ADC#16:STAread
+BCCP%+4:INCread+1
+CLC:LDAwrite:ADC#&40:STAwrite
+LDAwrite+1:ADC#1:STAwrite+1
+DEX:BNEscene2:LDYstoreY:RTS
+:
+\ Remember from now on - storeX is already set up
+.logic EQUWmouselogic:EQUWghostlogic:EQUWrobotlogic:EQUWaura:EQUWjellylogic
+.mouselogic
+LDAmonstanim,X
+EOR#2:STAmonstanim,X:ORAmonstbyte,X:AND#127:TAY:LDAmonlo,Y:STAread:LDAmonhi,Y:STAread+1
+LDYmonstx,X:STXstoreX:CLC:LDAmonsty,X
+ADC#3:CMP#48:BCCP%+4:SBC#48
+STAy:JSRgetmap:BNEmousenotfall
+TYA:CLC:ADC#2:CMP#48:BCCP%+4
+SBC#48:TAY:JSRgetmap:BNEmousenotfall
+.mousefall
+CLC:LDXstoreX:LDYmonsty,X:INY:CPY#48:BCCP%+4:LDY#0
+TYA:STAmonsty,X:LDAmonstbyte,X:ORA#128:STAmonstbyte,X:.mouseend:RTS
+.mousenotfall
+LDXstoreX
+LDAmonsttime,X:EOR#1:STAmonsttime,X:BEQP%+3:RTS
+LDAmonstbyte,X:BPLmdirdone:LDA&FE44:AND#1:STAmonstbyte,X:.mdirdone TAY:LDAmousedir,Y
+CLC:ADCmonstx,X:CMP#48:BCCP%+4
+SBC#48
+TAY:LDAmonsty,X:STAy:JSRgetmap
+BNEmouseturn:LDAy:CLC:ADC#2
+CMP#48:BCCP%+4:SBC#48:STAy
+JSRgetmap:BNEmouseturn
+LDXstoreX:LDAmonstbyte,X:TAY:LDAmouseadd,Y
+CLC:ADCmonstx,X:CMP#48:BCCP%+4
+SBC#48
+STA monstx,X:RTS
+.mouseturn LDXstoreX:LDAmonstbyte,X:EOR#1:STAmonstbyte,X:RTS
+.mousedir EQUB3:EQUB47
+.mouseadd EQUB1:EQUB47
+:
+.robotlogic LDAmonstanim,X:EOR#2:STAmonstanim,X:ORAmonstbyte,X:AND#127:CLC:ADC#8:TAY:LDAmonlo,Y:STAread:LDAmonhi,Y:STAread+1
+LDYmonstx,X:STXstoreX:CLC:LDAmonsty,X:ADC#3:CMP#48:BCCP%+4:SBC#48:STAy:JSRgetmap:BNErobotnotfall:TYA:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:TAY:JSRgetmap:BNErobotnotfall
+.robotfall
+CLC:LDXstoreX:LDYmonsty,X:INY:CPY#48:BCCP%+4:LDY#0:TYA:STAmonsty,X:LDAmonstbyte,X:ORA#128:STAmonstbyte,X:RTS
+.robotnotfall
+LDXstoreX:LDAmonstbyte,X:BPLrdirdone:LDA&FE44:AND#1:STAmonstbyte,X:.rdirdone TAY:LDAmousedir,Y
+CLC:ADCmonstx,X:CMP#48:BCCP%+4:SBC#48:TAY:LDAmonsty,X:STAy:JSRgetmap:BNErobotturn:LDAy:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:STAy:JSRgetmap:BNErobotturn
+LDXstoreX:INCmonsttime,X:BPLnotfallcheck
+LDXy:INX:CPX#48:BCCP%+4:LDX#0:STXy:JSRgetmap:BEQrobotturn:.notfallcheck
+LDXstoreX:LDAmonstbyte,X:TAY:LDAmouseadd,Y:CLC:ADCmonstx,X:CMP#48:BCCP%+4:SBC#48:STAmonstx,X:RTS
+.robotturn LDXstoreX:LDAmonstbyte,X:EOR#1:STAmonstbyte,X:RTS
+:
+.jellylogic LDAmonstanim,X:EOR#2:STAmonstanim,X:CLC:ADC#16:TAY:LDAmonlo,Y:STAread:LDAmonhi,Y:STAread+1
+STXstoreX
+LDAmonstbyte,X:BMIjellydown
+CLC:LDAmonstx,X:TAY:LDAmonsty,X:TAX:DEX:BPLP%+4:LDX#47:STXy:JSRgetmap:BNEnotjellyup:TYA:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:TAY:JSRgetmap:BNEnotjellyup
+LDXstoreX:LDYmonsty,X:DEY:BPLP%+4:LDY#47:TYA:STAmonsty,X:RTS
+.notjellyup LDXstoreX:LDA#128:STAmonstbyte,X:RTS:.jellydown LDXstoreX
+CLC:LDAmonstx,X:TAY:LDAmonsty,X:CLC:ADC#3:CMP#48:BCCP%+4:SBC#48:STAy:JSRgetmap:BNEnotjellydn:TYA:CLC:ADC#2:CMP#48:BCCP%+4:SBC#48:TAY:JSRgetmap:BNEnotjellydn
+LDXstoreX:LDYmonsty,X:INY:CPY#48:BCCP%+4:LDY#0:TYA:STAmonsty,X:RTS
+.notjellydn LDXstoreX:LDA#0:STAmonstbyte,X:RTS
+:
+.spr16
+]FORK%=15TO8STEP-1:[OPTN%:LDY#K%:LDA(read),Y:STA(write),Y:]NEXT:[OPTN%
+.spr8
+]FORK%=7TO0STEP-1:[OPTN%:LDY#K%:LDA(read),Y:STA(write),Y:]NEXT:[OPTN%
+RTS
+.bullet
+STXstoreX:LDAssprx,X:TAY:LDAsspry,X:TAX:LDAtab48lo%,X:STAaddr:LDAtab48hi%,X:STAaddr+1:LDXstoreX:LDA(addr),Y:CMP#64:BCSnothitmonster
+TAX:LDYmonsttype,X:LDAmonstscore,Y:JSRaddscore:LDA#128:STAmonsttype,X:LDAmonstx,X:STAmx:CLC:ADC#1:BCCP%+4:LDA#0:STAx:LDAmonsty,X:STAmy:CLC:ADC#1:BCCP%+4:LDA#0:STAy:LDX#63:JSRexplode
+LDA#128:JSRputonsolmap:DECmonsters:LDXstoreX:LDA#1:STAssprnum,X:LDA#0:STAssprdir,X:RTS
+.nothitmonster LDAssprdir,X:TAY:CLC:LDAbulletdir,Y:ADCssprx,X:CMP#48:BCCP%+4:SBC#48:STAssprx,X:TAY:LDAsspry,X:STAy:JSRgetmap:BEQnothit
+STAx:AND#15:CMP#13:BNEnotshootable:TYA:LSRA:TAY:LDAx:CLC:ADC#32:STA(addr),Y:BCCnotshootable:LDA#0:STA(addr),Y:LDYstoreY:STYx:LDX#15:JSRexplode:LDA#10:JSRaddscore:LDXstoreX:.notshootable LDYstoreY
+LDXstoreX:LDA#128:STAssprnum,X:STYx:LDX#7:JSRexplode:LDXstoreX:RTS
+.nothit
+LDXstoreX
+SEC:LDAssprx,X:SBCtopx:CMP#48:BCCP%+4:ADC#47:CMP#31:BCSkillbullet:SEC:LDAsspry,X:SBCtopy:CMP#48:BCCP%+4:ADC#47:CMP#21:BCSkillbullet:RTS:.killbullet LDA#128:STAssprnum,X:RTS
+.bulletdir EQUB2:EQUB46
+:
+.putonsolmap
+PHA
+TAY:LDAmonsttype,Y:CMP#3:BEQtisaura
+LDYmx:LDXmy:LDAtab48lo%,X:STAaddr:LDAtab48hi%,X:STAaddr+1
+INX:CPX#48:BCCP%+4:LDX#0
+LDAtab48lo%,X:STAaddr2:LDAtab48hi%,X:STAaddr2+1
+INX:CPX#48:BCCP%+4:LDX#0
+LDAtab48lo%,X:STAaddr3:LDAtab48hi%,X:STAaddr3+1
+PLA:STA(addr),Y:STA(addr2),Y:STA(addr3),Y
+INY:CPY#48:BCCP%+4:LDY#0
+STA(addr),Y:STA(addr2),Y:STA(addr3),Y
+INY:CPY#48:BCCP%+4:LDY#0
+STA(addr),Y:STA(addr2),Y:STA(addr3),Y
+RTS
+.tisaura PLA:RTS
+:
+.irq LDA&FC:PHA:LDA#2:STA&FE4D:INCvsync:PLA:STA&FC:RTI
+:
+.tokenl
+STXstoreX
+INCssprdir,X:BNEstillok
+LDAssprx,X:STAx:LDAsspry,X:STAy:LDA#128:STAssprnum,X:LDX#31:JSRexplode:LDA#25:CLC:ADCtimedef:BCCP%+4:LDA#&FF:STAtimedef:DECtotmonsters:RTS:.stillok
+LDYsspry,X:LDAtab48lo%,Y:STAaddr:LDAtab48hi%,Y:STAaddr+1:LDYssprx,X:LDA(addr),Y:CMP#64:BNEnotpickedup
+LDA#10:JSRaddscore:DECtotmonsters
+LDA#128:STAssprnum,X:RTS:.notpickedup
+LDYsspry,X:INY:CPY#48:BCCP%+4:LDY#0:STYy:LDYssprx,X:JSRgetmap:BNEbounce:LDXstoreX:LDAy:STAsspry,X:RTS:.bounce LDXstoreX
+LDAssprnum,X:CLC:ADC#1:CMP#5:BCCP%+4:LDA#1:STAssprnum,X:RTS
+:
+.pixels EQUD&1020408
+:
+.rnd STXgetbackx+1:LDXrndptr:LDArndtab,X:EOR&FE44:STArndtab,X:INX:CPX#16:BCCP%+4:LDX#0:STXrndptr:.getbackx LDX#0:RTS
+.rndtab EQUD RND:EQUD RND:EQUD RND:EQUD RND
+:
+.explode LDY#0:.lp LDAdotmx,Y:BMIfreedot:INY:BPLlp:JMPfindots:.freedot
+LDAx:STAdotmx,Y:LDAy:STAdotmy,Y:JSRrnd:STAdotx,Y:JSRrnd:STAdoty,Y:JSRrnd:STAdotvx,Y:JSRrnd:STAdotvy,Y
+DEX:BPLexplode:.findots RTS
+:
+.aura
+LDAmonstanim,X:CLC:ADC#1:AND#3:STAmonstanim,X:CLC:ADC#12:TAY:LDAmonlo,Y:STAread:LDAmonhi,Y:STAread+1:DECmonsttime,X:BEQP%+3:RTS:LDAmonstbyte,X:STAmonsttype,X:JSRrnd:AND#1:STAmonstbyte,X:RTS
+:
+.ghostlogic LDAmonsttime,X:EOR#1:STAmonsttime,X:BEQjon:LDA#2:.jon EORmonstanim,X:STAmonstanim,X:STAjacob+1:LDAmonstbyte,X:AND#1:.jacob ORA #0:CLC:ADC#4:TAY:LDAmonlo,Y:STAread:LDAmonhi,Y:STAread+1
+JSRrnd:AND#15:BEQghcantmove
+LDYmonstbyte,X:CLC:LDAmonsty,X:ADCghsoladdy,Y:CMP#48:BCCP%+4:SBC#48:STAy:CLC:LDAmonstx,X:ADCghsoladdx,Y:CMP#48:BCCP%+4:SBC#48:TAY
+STXstoreX:JSRgetmap:BNEghcantmove:LDXstoreX
+LDYmonstbyte,X:CLC:LDAmonsty,X:ADCghsoladd2y,Y:CMP#48:BCCP%+4:SBC#48:STAy:CLC:LDAmonstx,X:ADCghsoladd2x,Y:CMP#48:BCCP%+4:SBC#48:TAY
+JSRgetmap:BNEghcantmove:LDXstoreX:.ghmove
+LDYmonstbyte,X:CLC:LDAmonsty,X:ADCghaddy,Y:CMP#48:BCCP%+4:SBC#48:STAmonsty,X:CLC:LDAmonstx,X:ADCghaddx,Y:CMP#48:BCCP%+4:SBC#48:STAmonstx,X:RTS
+.ghcantmove LDXstoreX:JSRrnd:AND#3:STAmonstbyte,X:RTS
+.ghaddx EQUB1:EQUB47:EQUB0:EQUB0
+.ghaddy EQUB0:EQUB0:EQUB47:EQUB1
+.ghsoladdx EQUB3:EQUB47:EQUB0:EQUB0
+.ghsoladdy EQUB0:EQUB0:EQUB47:EQUB3
+.ghsoladd2x EQUB3:EQUB47:EQUB2:EQUB2
+.ghsoladd2y EQUB2:EQUB2:EQUB47:EQUB3
+:
+.addscore
+CLC:ADCpending:STApending:BCSP%+3:RTS:INCpending:RTS
+:
+.monstscore EQUB20:EQUB50:EQUB40:EQUB0:EQUB25
+:
+.killyou
+LDAdieflag:BEQP%+3:RTS
+LDX#127:LDA#128:.lp STAdotmx,X:DEX:BPLlp:CLC:LDAtopx:ADC#15:CMP#48:BCCP%+4:SBC#48:STAx:LDAtopy:ADC#10:CMP#48:BCCP%+4:SBC#48:STAy:LDX#127:JSRexplode
+LDA#48:STAdieflag:RTS
+]:ENDPROC
+REM >Part3
+[OPTN%
+.restartlevel
+LDXlevel:LDA#maps%MOD256:STAaddr:LDA#maps%DIV256:STAaddr+1:CPX#1:BEQlevelfound:DEX
+.fndlevlp LDY#0:LDA(addr),Y:CLC:ADCaddr:STAaddr:BCCP%+4:INCaddr+1:DEX:BNEfndlevlp
+.levelfound
+LDX#0:TXA:.clrmaplp STA&900,X:STA&A00,X:DEX:BNEclrmaplp:LDX#&3F:.clrmaplp STA&B00,X:DEX:BPLclrmaplp
+SEC:LDA#50:SBClevel:LSRA:LSRA:LSRA:STAdeftime:LDA#0:STAtotmonsters
+STAtimer:STAdieflag:STAtopx:STAtopy:STAjumpflg:STAdir:STAmonsters
+LDX#15:LDA#128:.monclrlp STAmonsttype,X:DEX:BPLmonclrlp
+LDX#127:.dotclrlp STAdotmx,X:DEX:BPLdotclrlp
+LDX#31:.smclrlp STAssprnum,X:DEX:BPLsmclrlp
+LDX#7:LDA#0:.genclrlp STAgennum,X:DEX:BPLgenclrlp
+LDX#9:LDA#solmap%DIV256:STAsolclrlp+2:LDY#0:LDA#128:.solclrlp STAsolmap%,Y:INY:BNEsolclrlp
+INCsolclrlp+2:DEX:BNEsolclrlp
+LDA#231:STAtimeleft
+LDX#0:LDY#0:.timebarlp
+LDAtimebarspr,X:STA&60E0,Y
+STA&7EE0,Y:INX:CPX#8:BCCP%+4
+LDX#0:INY:CPY#232:BNEtimebarlp
+:
+LDY#1:LDA(addr),Y:STAtemp
+AND#7:TAX:INY
+.placegens
+JSRgetxy
+LDAx:STAgenx,X:LDAy:STAgeny,X
+LDA(addr),Y:LSRA:LSRA:PHA
+AND#7:STAgentype,X
+LDA#1:STAgencount,X
+PLA:LSRA:LSRA:LSRA:STAgennum,X
+CLC:ADCtotmonsters:STAtotmonsters
+STYstoreY:LDYy:LDAtab24lo%,Y
+STAwrite:LDAtab24hi%,Y:STAwrite+1
+LDYx:LDA#14:STA(write),Y
+INY:CPY#24:BCCP%+4:LDY#0
+LDA#15:STA(write),Y
+LDYstoreY:INY:DEX
+BPLplacegens
+:
+LDAtemp:LSRA:LSRA:LSRA:STAcountx
+.placeplats
+JSRgetxy
+LDA(addr),Y:LSRA:LSRA:STAtemp
+AND#3:ASLA:TAX:LDAplatrouts,X
+STAplatjsr+1:LDAplatrouts+1,X
+STAplatjsr+2:.platjsr JSR&FFFF
+DECcountx:BPLplaceplats
+RTS
+:
+.getxy
+LDA(addr),Y:AND#31:STAx
+LDA(addr),Y:LSRA:LSRA:LSRA:LSRA
+LSRA:STAy
+INY:LDA(addr),Y:AND#3
+ASLA:ASLA:ASLA:ORAy:STAy
+RTS
+:
+.platrouts EQUWvertical
+EQUWhoriz:EQUWends
+:
+.vertical
+LDAtemp:LSRA:LSRA:STAtemp
+INY:LDA(addr),Y:INY:STYstoreY
+STAtemp+1:LDXy:.vertloop
+LDYx:LDAtab24lo%,X:STAwrite
+LDAtab24hi%,X:STAwrite+1
+LDAtemp:STA(write),Y
+INX:CPX#24:BCCP%+4:LDX#0
+DECtemp+1:BNEvertloop
+LDYstoreY:RTS
+:
+.horiz
+LDAtemp:LSRA:LSRA:STAtemp
+INY:LDA(addr),Y:INY
+STYstoreY:TAX
+LDYy:LDAtab24lo%,Y:STAwrite
+LDAtab24hi%,Y:STAwrite+1
+LDYx:.pokeonloop
+LDAtemp:STA(write),Y
+INY:CPY#24:BCCP%+4:LDY#0
+DEX:BNEpokeonloop
+LDYstoreY
+RTS
+:
+.ends
+LDAtemp:LSRA:LSRA:STAtemp
+INY:LDA(addr),Y:INY:STYstoreY
+TAX:LDYy:LDAtab24lo%,Y:STAwrite
+LDAtab24hi%,Y:STAwrite+1
+LDYx:LDAtemp:CLC:ADC#1
+STA(write),Y:INY:CPY#24:BCCP%+4
+LDY#0:DEX:.pokeonloop
+LDAtemp:STA(write),Y
+INY:CPY#24:BCCP%+4:LDY#0
+DEX:CPX#1:BNEpokeonloop
+LDAtemp:CLC:ADC#2:STA(write),Y
+LDYstoreY:RTS
+:
+.timebarspr EQUD&F0F00F00:EQUD&0FF0F0
+:
+.fancycls
+JSRpokevidc
+LDA#8:STAcountx:.fancyloop
+LDA#&48:STAaddr:CLC:LDAscrn:ADC#1:STAaddr+1:LDX#21:.fancyloop2
+LDY#0:.fancyloop3 LDA(addr),Y
+LSRA:STA(addr),Y:INY:CPY#248
+BNEfancyloop3:CLC:LDAaddr
+ADC#&40:STAaddr:LDAaddr+1:ADC#1
+STAaddr+1:DEX:BNEfancyloop2
+LDA#0:STAvsync:.wait LDAvsync:BEQwait
+DECcountx:BNEfancyloop
+LDAscrn:EOR#(&44 EOR &62):STAscrn
+RTS
+]:ENDPROC

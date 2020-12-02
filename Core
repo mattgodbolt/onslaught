@@ -1,0 +1,57 @@
+10 REM >Core
+20 IFPAGE<>&3000:PAGE=&3000:CHAIN"Core"
+30 :
+40 MODE7
+50 LOMEM=&6500:top%=TOP-2
+60 *KEY1 OSCLI"Save Game 1100 "+STR$~P%+" "+STR$~start|MCH."Loader"
+70 read=&70:write=&72:addr=&74
+80 x=&76:y=&77:temp=&78:scrn=&7A
+90 xstart=&7B:ystart=&7C:xsize=&7D:ysize=&7E
+100 topx=&7F:topy=&80:mx=&81:my=&82
+110 countx=&83:county=&84
+120 storeY=&85:storeX=&86
+130 monsters=&87:dir=&88:jumpflg=&89
+140 vsync=&8A:offset=&8B:addr2=&8C
+150 addr3=&8E
+160 firedelay=&90:rndptr=&91
+170 timeleft=&92:timer=&93:deftime=&94
+180 score=&95:pending=&9B:timedef=&9D
+190 dieflag=&9E:level=&9F
+200 totmonsters=&A0
+210 monstanim=&10
+220 monsttime=&20
+230 monstbyte=&40:monsttype=&30
+240 monstx=&50:monsty=&60
+250 scrlo%=&1100:scrhi%=&1118
+260 tab24lo%=&1130:tab24hi%=&1148
+270 sclo%=&1160:schi%=&1170
+280 solmap%=&3380
+290 maps%=&2B80
+300 reftab%=&1180:FORN%=0TO&FF
+310 b1%=(N%AND&88)DIV8
+320 b2%=(N%AND&44)DIV2
+330 b3%=(N%AND&22)*2
+340 b4%=(N%AND&11)*8
+350 N%?reftab%=b1%ORb2%ORb3%ORb4%
+360 NEXT
+370 FORN%=0TO20:A%=&148+&140*N%:N%?scrlo%=A%:N%?scrhi%=A%DIV256:NEXT
+380 FORN%=0TO23:A%=&900+24*N%:tab24lo%?N%=A%:tab24hi%?N%=A%DIV256:NEXT
+390 FORN%=0TO15:A%=&3C80+(N%-1)*32:sclo%?N%=A%:schi%?N%=A%DIV256:NEXT
+400 monlo=&1280:monhi=&12A0:FORN%=0TO15:A%=&3F80+72*N%:B%=&400+72*N%
+410 monlo?(N%*2)=A%:monlo?(N%*2+1)=B%
+420 monhi?(N%*2)=A%DIV256:monhi?(N%*2+1)=B%DIV256:NEXT
+430 ssprx=&12C0:sspry=&12E0:ssprdir=&1300:ssprnum=&1320
+440 tab48lo%=&1340:tab48hi%=&1370
+450 FORN%=0TO47:A%=solmap%+48*N%:tab48lo%?N%=A%:tab48hi%?N%=A%DIV256:NEXT
+460 dotmx=&E00:dotmy=&E80:dotx=&F00:doty=&F80:dotvx=&1000:dotvy=&1080
+470 genx=&13A0:geny=&13A8:gentype=&13B0:gencount=&13B8:gennum=&13C0
+480 sctext=&B40:digits=&B70
+490 FORN%=0TO2STEP2:P%=&13C8:FORpart%=1TO3
+500 PRINTN%,part%
+510 OSCLI"L.Part"+STR$part%+" "+STR$~top%
+520 PROCassemble
+530 NEXT,
+540 OSCLI"Save Game 1100 "+STR$~P%+" "+STR$~start
+550 END
+560 :
+570 DEF PROCassemble
